@@ -17,14 +17,32 @@
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
                         aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
+                </button>                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+                        </li>                        <li class="nav-item" id="dashboardLink" style="display: none;">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="DashboardUI" asp-action="Index">Dashboard</a>
+                        </li>
+                        <li class="nav-item" id="adminLink" style="display: none;">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="AdminUI" asp-action="Index">Admin</a>
+                        </li>
+                    </ul>
+                    <ul class="navbar-nav">
+                        <li class="nav-item" id="loginLink">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Account" asp-action="Login">Login</a>
+                        </li>
+                        <li class="nav-item" id="registerLink">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Account" asp-action="Register">Register</a>
+                        </li>
+                        <li class="nav-item" id="logoutLink" style="display: none;">
+                            <a class="nav-link text-dark" asp-area="" asp-controller="Account" asp-action="Logout">Logout</a>
+                        </li>
+                        <li class="nav-item" id="userInfoLink" style="display: none;">
+                            <span class="nav-link text-dark" id="userInfo">Welcome</span>
                         </li>
                     </ul>
                 </div>
@@ -41,10 +59,51 @@
         <div class="container">
             &copy; 2025 - SafeVault - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
         </div>
-    </footer>
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    </footer>    <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    
+    <script>
+        $(document).ready(function() {
+            // Check if user is logged in
+            const token = localStorage.getItem('auth_token');
+            const userRole = localStorage.getItem('user_role');
+            
+            if (token) {
+                // User is logged in
+                $('#loginLink').hide();
+                $('#registerLink').hide();
+                $('#logoutLink').show();
+                $('#userInfoLink').show();
+                $('#dashboardLink').show();
+                
+                // Set user info
+                if (userRole) {
+                    $('#userInfo').text('Welcome, ' + userRole);
+                }
+                
+                // Show admin link for admin users
+                if (userRole === 'Admin') {                $('#adminLink').show();
+            }
+            
+            // Add token to all AJAX requests
+            $.ajaxSetup({
+                beforeSend: function(xhr) {
+                    xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+                }
+            });
+            } else {
+                // User is not logged in
+                $('#loginLink').show();
+                $('#registerLink').show();
+                $('#logoutLink').hide();
+                $('#userInfoLink').hide();
+                $('#dashboardLink').hide();
+                $('#adminLink').hide();
+            }
+        });
+    </script>
+    
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

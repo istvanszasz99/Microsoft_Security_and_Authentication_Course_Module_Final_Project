@@ -1,0 +1,33 @@
+@{
+    ViewData["Title"] = "Logout";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="text-center">Logged Out</h2>
+                </div>
+                <div class="card-body text-center">
+                    <p class="lead">You have been successfully logged out.</p>
+                    <p>Thank you for using SafeVault.</p>
+                    <a href="/Account/Login" class="btn btn-primary">Log In Again</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Clear authentication data from local storage
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('user_role');
+            
+            // Additional cleanup if needed
+            sessionStorage.clear();
+        });
+    </script>
+}

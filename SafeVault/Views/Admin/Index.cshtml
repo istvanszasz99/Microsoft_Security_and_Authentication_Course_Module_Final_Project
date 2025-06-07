@@ -1,0 +1,247 @@
+@{
+    ViewData["Title"] = "Admin Panel";
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12 mb-4">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h2>SafeVault Admin Panel</h2>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Admin Dashboard</h5>
+                    <p class="card-text">This area is restricted to administrators only.</p>
+                    <div id="loading" class="text-center">
+                        <div class="spinner-border text-danger" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p>Loading system data...</p>
+                    </div>
+                    <div id="admin-data" style="display: none;">
+                        <div class="alert alert-info">
+                            <strong>System Status:</strong> <span id="system-status">Online</span><br>
+                            <strong>Active Users:</strong> <span id="active-users">0</span><br>
+                            <strong>Storage Usage:</strong> <span id="storage-usage">0</span>%
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row" id="admin-content" style="display: none;">
+        <div class="col-md-12 mb-4">
+            <div class="card">
+                <div class="card-header bg-dark text-white">
+                    <h5>User Management</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Username</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="users-table-body">
+                                <!-- Users will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <button class="btn btn-primary" id="add-user-btn">Add New User</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header bg-dark text-white">
+                    <h5>System Logs</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-secondary">
+                        <small id="system-logs">Loading logs...</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header bg-dark text-white">
+                    <h5>Security Settings</h5>
+                </div>
+                <div class="card-body">
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="enable2fa" checked>
+                        <label class="form-check-label" for="enable2fa">Enforce Two-Factor Authentication</label>
+                    </div>
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="enforcePasswordPolicy" checked>
+                        <label class="form-check-label" for="enforcePasswordPolicy">Enforce Strong Password Policy</label>
+                    </div>
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="enableAuditLogs" checked>
+                        <label class="form-check-label" for="enableAuditLogs">Enable Audit Logging</label>
+                    </div>
+                    <button class="btn btn-primary">Save Settings</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add User Modal -->
+<div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addUserModalLabel">Add New User</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="add-user-form">
+                    <div class="mb-3">
+                        <label for="new-username" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="new-username" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="new-email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="new-email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="new-password" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="new-password" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="new-role" class="form-label">Role</label>
+                        <select class="form-select" id="new-role" required>
+                            <option value="User">User</option>
+                            <option value="Admin">Admin</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="save-user-btn">Add User</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            const token = localStorage.getItem('auth_token');
+            const userRole = localStorage.getItem('user_role');
+            
+            if (!token || userRole !== 'Admin') {
+                window.location.href = '/Account/Login';
+                return;
+            }
+            
+            // Load admin dashboard data
+            $.ajax({
+                type: 'GET',
+                url: '/api/admin/dashboard',
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                },
+                success: function(data) {
+                    $('#loading').hide();
+                    $('#admin-data').show();
+                    $('#admin-content').show();
+                },
+                error: function(error) {
+                    $('#loading').hide();
+                    alert('Error loading admin data. Please try logging in again.');
+                    console.error('Admin dashboard loading error:', error);
+                    window.location.href = '/Account/Login';
+                }
+            });
+            
+            // Load users list
+            $.ajax({
+                type: 'GET',
+                url: '/api/admin/users',
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                },
+                success: function(users) {
+                    let tableHtml = '';
+                    users.forEach(user => {
+                        tableHtml += `
+                            <tr>
+                                <td>${user.id}</td>
+                                <td>${user.username}</td>
+                                <td>${user.email}</td>
+                                <td><span class="badge ${user.role === 'Admin' ? 'bg-danger' : 'bg-primary'}">${user.role}</span></td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-secondary">Edit</button>
+                                    <button class="btn btn-sm btn-outline-danger">Delete</button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    $('#users-table-body').html(tableHtml);
+                    
+                    // Update admin stats
+                    $('#system-status').text('Online');
+                    $('#active-users').text(users.length);
+                    $('#storage-usage').text('68.5');
+                    
+                    // Simulate system logs
+                    $('#system-logs').html(`
+                        [${new Date().toISOString()}] System started<br>
+                        [${new Date(Date.now() - 1000 * 60).toISOString()}] User admin logged in<br>
+                        [${new Date(Date.now() - 1000 * 60 * 5).toISOString()}] Security scan completed<br>
+                        [${new Date(Date.now() - 1000 * 60 * 10).toISOString()}] Backup completed<br>
+                        [${new Date(Date.now() - 1000 * 60 * 60).toISOString()}] User user logged in<br>
+                    `);
+                },
+                error: function(error) {
+                    console.error('Error loading users:', error);
+                }
+            });
+            
+            // Add user button click
+            $('#add-user-btn').click(function() {
+                $('#addUserModal').modal('show');
+            });
+            
+            // Save user button click
+            $('#save-user-btn').click(function() {
+                const newUser = {
+                    username: $('#new-username').val(),
+                    email: $('#new-email').val(),
+                    password: $('#new-password').val(),
+                    role: $('#new-role').val()
+                };
+                
+                $.ajax({
+                    type: 'POST',
+                    url: '/api/admin/adduser',
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    },
+                    contentType: 'application/json',
+                    data: JSON.stringify(newUser),
+                    success: function(response) {
+                        alert('User added successfully');
+                        $('#addUserModal').modal('hide');
+                        // In a real app, you would refresh the user list here
+                    },
+                    error: function(error) {
+                        alert('Error adding user: ' + error.responseText);
+                    }
+                });
+            });
+        });
+    </script>
+}

@@ -1,0 +1,129 @@
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12 mb-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h2>SafeVault Dashboard</h2>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">Welcome to your secure dashboard</h5>
+                    <p class="card-text">This area is protected and only accessible to authenticated users.</p>
+                    <div id="loading" class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p>Loading your data...</p>
+                    </div>
+                    <div id="dashboard-data" style="display: none;">
+                        <div class="alert alert-info">
+                            <strong>User:</strong> <span id="username"></span><br>
+                            <strong>Role:</strong> <span id="role"></span><br>
+                            <strong>Last Login:</strong> <span id="last-login"></span>
+                        </div>
+                        <div id="admin-panel" style="display: none;">
+                            <div class="alert alert-warning">
+                                <strong>Admin Panel</strong>
+                                <p>You have administrative privileges. You can access additional features.</p>
+                                <a href="/admin" class="btn btn-warning">Go to Admin Panel</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row" id="secure-content" style="display: none;">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>Secure Files</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group" id="files-list">
+                        <li class="list-group-item">No files available</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>Recent Activity</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group" id="activity-list">
+                        <li class="list-group-item">No recent activity</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            const token = localStorage.getItem('auth_token');
+            const userRole = localStorage.getItem('user_role');
+            
+            if (!token) {
+                window.location.href = '/Account/Login';
+                return;
+            }
+            
+            // Load dashboard data
+            $.ajax({
+                type: 'GET',
+                url: '/api/dashboard',
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                },
+                success: function(data) {
+                    $('#loading').hide();
+                    $('#dashboard-data').show();
+                    $('#secure-content').show();
+                    
+                    $('#username').text(data.username);
+                    $('#role').text(data.role);
+                    $('#last-login').text(new Date(data.lastLogin).toLocaleString());
+                    
+                    if (data.role === 'Admin') {
+                        $('#admin-panel').show();
+                    }
+                    
+                    // Simulate loading files (in a real app, this would come from the server)
+                    if (data.role === 'Admin') {
+                        $('#files-list').html(`
+                            <li class="list-group-item">financial_report_2025.pdf</li>
+                            <li class="list-group-item">system_backup_2025-06-01.zip</li>
+                            <li class="list-group-item">user_data.csv</li>
+                            <li class="list-group-item">admin_notes.txt</li>
+                        `);
+                    } else {
+                        $('#files-list').html(`
+                            <li class="list-group-item">my_documents.pdf</li>
+                            <li class="list-group-item">personal_data.txt</li>
+                        `);
+                    }
+                    
+                    // Simulate activity (in a real app, this would come from the server)
+                    $('#activity-list').html(`
+                        <li class="list-group-item">Login - ${new Date().toLocaleString()}</li>
+                        <li class="list-group-item">Profile updated - ${new Date(Date.now() - 86400000).toLocaleString()}</li>
+                    `);
+                },
+                error: function(error) {
+                    $('#loading').hide();
+                    alert('Error loading dashboard data. Please try logging in again.');
+                    console.error('Dashboard loading error:', error);
+                    window.location.href = '/Account/Login';
+                }
+            });
+        });
+    </script>
+}

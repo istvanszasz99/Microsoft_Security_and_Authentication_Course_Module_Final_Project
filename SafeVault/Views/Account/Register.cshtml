@@ -1,0 +1,103 @@
+@model SafeVault.Models.RegisterModel
+
+@{
+    ViewData["Title"] = "Register";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="text-center">Create a SafeVault Account</h2>
+                </div>
+                <div class="card-body">
+                    <form id="registerForm">
+                        <div class="mb-3">
+                            <label asp-for="Username" class="form-label">Username</label>
+                            <input asp-for="Username" class="form-control" required />
+                            <span asp-validation-for="Username" class="text-danger"></span>
+                        </div>
+                        <div class="mb-3">
+                            <label asp-for="Email" class="form-label">Email</label>
+                            <input asp-for="Email" class="form-control" type="email" required />
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                        </div>
+                        <div class="mb-3">
+                            <label asp-for="Password" class="form-label">Password</label>
+                            <input asp-for="Password" class="form-control" type="password" required />
+                            <span asp-validation-for="Password" class="text-danger"></span>
+                            <small class="form-text text-muted">Password must be at least 8 characters and contain letters, numbers, and special characters.</small>
+                        </div>
+                        <div class="mb-3">
+                            <label asp-for="ConfirmPassword" class="form-label">Confirm Password</label>
+                            <input asp-for="ConfirmPassword" class="form-control" type="password" required />
+                            <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Register</button>
+                        </div>
+                        <div class="alert alert-danger mt-3" id="error-message" style="display:none;">
+                            Registration failed. Please try again.
+                        </div>
+                        <div class="alert alert-success mt-3" id="success-message" style="display:none;">
+                            Registration successful! You can now <a href="/Account/Login">log in</a>.
+                        </div>
+                    </form>
+                    <div class="mt-3 text-center">
+                        <p>Already have an account? <a href="/Account/Login">Log in here</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            $('#registerForm').submit(function(e) {
+                e.preventDefault();
+                
+                // Password validation
+                const password = $('#Password').val();
+                const confirmPassword = $('#ConfirmPassword').val();
+                
+                if (password !== confirmPassword) {
+                    $('#error-message').text('Passwords do not match').show();
+                    return;
+                }
+                
+                // Simple password strength check
+                if (password.length < 8) {
+                    $('#error-message').text('Password must be at least 8 characters long').show();
+                    return;
+                }
+                
+                const registerData = {
+                    username: $('#Username').val(),
+                    email: $('#Email').val(),
+                    password: password,
+                    confirmPassword: confirmPassword
+                };
+                
+                $.ajax({
+                    type: 'POST',
+                    url: '/api/auth/register',
+                    contentType: 'application/json',
+                    data: JSON.stringify(registerData),
+                    success: function(response) {
+                        $('#error-message').hide();
+                        $('#success-message').show();
+                        $('#registerForm')[0].reset();
+                    },
+                    error: function(error) {
+                        $('#error-message').text(error.responseText || 'Registration failed. Please try again.').show();
+                        $('#success-message').hide();
+                        console.error('Registration failed:', error);
+                    }
+                });
+            });
+        });
+    </script>
+}
